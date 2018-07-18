@@ -1,6 +1,13 @@
 # vue-run
 
-> A Vue.js project
+``` bash
+Основа - price-checker
+Добавляем товары в базу Firebase. 
+Выводим обратно со всей инфой о товарах. 
+[in progress...]
+
+Включено тестовое задание для softex-lab.com
+```
 
 ## Build Setup
 
