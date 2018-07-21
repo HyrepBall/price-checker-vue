@@ -65,9 +65,9 @@ export default {
           link: '/add',
           title: 'Добавить',
         },
-      ]
-    }
-  }
+      ],
+    };
+  },
 };
 </script>
 

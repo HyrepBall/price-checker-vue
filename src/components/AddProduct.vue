@@ -1,8 +1,6 @@
 <template>
   <div >
 
-    {{collectData}}
-
     <h3 class="title py-4">Добавить продукт</h3>
 
     <v-container class="pa-0" >
@@ -49,22 +47,22 @@
                 required
               ></v-text-field>
             </v-flex>
+            <v-flex lg6 class="px-1">
+              <v-btn :color="imageUrl ? `success` : `info`" block large @click="pickUploadImage">
+                {{imageUrl ? 'Успешно' : 'Загрузить фото'}}
+                <v-icon right dark>{{ imageUrl ? `done` : 'cloud_upload' }}</v-icon>
+              </v-btn>
+              <input
+                type="file"
+                style="display:none;"
+                ref="uploadImageInput"
+                accept="image/*"
+                @change="onImagePicked"
+                >
+            </v-flex>
             <v-layout>
-              <v-flex lg4 class="pa-1">
-                <v-btn color="info" block large @click="pickUploadImage">
-                  Загрузить фото
-                  <v-icon right dark>cloud_upload</v-icon>
-                </v-btn>
-                <input
-                  type="file"
-                  style="display:none;"
-                  ref="uploadImageInput"
-                  accept="image/*"
-                  @change="onImagePicked"
-                  >
-                <img :src="imageUrl" alt="" height="100" width="100">
-              </v-flex>
               <v-flex lg4>
+                <img :src="imageUrl" alt="" height="100" width="100">
               </v-flex>
               <v-flex lg4 class="pa-1">
                 <v-btn
@@ -74,7 +72,7 @@
                   @click="addProduct"
                 >
                   Добавить товар
-                  <v-icon right dark>save</v-icon>
+                  <v-icon  right dark>save</v-icon>
                 </v-btn>
               </v-flex>
             </v-layout>
@@ -82,6 +80,16 @@
         </v-flex>
       </v-form>
     </v-container>
+
+    <v-snackbar
+      v-model="snackbar"
+      color="blue-grey darken-4"
+      right
+      bottom
+      :timeout="1000"
+    >
+      {{snackbarMsg}}
+    </v-snackbar>
   </div>
 </template>
 
@@ -92,6 +100,8 @@ export default {
   name: 'add-product',
   data() {
     return {
+      snackbar: false,
+      snackbarMsg: '',
       title: '',
       price: '',
       categoryList: [
@@ -112,7 +122,6 @@ export default {
         category: this.category,
         shopLocation: this.shopLocation,
         shopName: this.shopName,
-        image: this.image,
       };
     },
   },
@@ -136,8 +145,39 @@ export default {
       this.image = files[0];
     },
     addProduct() {
-      console.log(db);
-      console.log(storage);
+      let imageUrl
+      let key
+
+      if (this.image !== null) {
+        db.collection('products').add(this.collectData)
+        .then(snap => {
+          key = snap.id
+          return key
+        })
+        .then(key => {
+          const filename = this.image.name
+          const ext = filename.slice(filename.lastIndexOf('.'))
+          return storage.ref(`product-img/${key}${ext}`).put(this.image)
+        })
+        .then(fileData => {
+          fileData.ref.getDownloadURL().then(downloadURL => {
+            db.collection('products').doc(key).set({
+              imageUrl: downloadURL,
+              key: key,
+            },{ merge: true });
+          })
+          this.snackbarMsg = 'Товар добавлен'
+          this.snackbar = true
+          this.saveButtonColor = 'success'
+        })
+        .catch(err => {
+          this.snackbarMsg = err
+          this.snackbar = true
+        })
+      } else if (this.image === null) {
+        this.snackbarMsg = 'Загрузите фото'
+        this.snackbar = true
+      }
     },
   },
 };
